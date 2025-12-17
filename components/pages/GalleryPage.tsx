@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import CTASection from '../CTASection';
 import FadeIn from '../FadeIn';
 
-const GalleryPage: React.FC = () => {
-    const [selectedCategory, setSelectedCategory] = useState<'all' | 'restoration' | 'maintenance' | 'landscaping'>('all');
+interface GalleryItem {
+    category: string;
+    title: string;
+    description: string;
+    image: string;
+    size: string;
+    isUserUploaded?: boolean;
+}
 
-    const galleryItems = [
+const GalleryPage: React.FC = () => {
+    const [selectedCategory, setSelectedCategory] = useState<'all' | 'restoration' | 'maintenance' | 'landscaping' | 'community'>('all');
+    const [uploadedItems, setUploadedItems] = useState<GalleryItem[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const staticGalleryItems: GalleryItem[] = [
         {
             category: 'restoration',
             title: "Total Lawn Restoration",
@@ -54,12 +66,124 @@ const GalleryPage: React.FC = () => {
             description: "Our dedicated crew on site.",
             image: "https://scontent.fdar12-1.fna.fbcdn.net/v/t39.30808-6/558830095_1411967717604820_1863208052478694005_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=UWBtKqhKR9gQ7kNvwHECuXl&_nc_oc=AdkaqZ0FCHt7wsTqrG4X1KpsUdErBt_VGxDt3cPpt36KoPgvCXx-jZWp_siXc4D8NNg&_nc_zt=23&_nc_ht=scontent.fdar12-1.fna&_nc_gid=-QjVbZhfoI8FEj9QXMGPiA&oh=00_AfmOXHmCKS5bEUDRjiCcxJ3AVpCy2GpDnbv1WRv3amKUjw&oe=69470492",
             size: "medium"
+        },
+        {
+            category: 'maintenance',
+            title: "Professional Mowing",
+            description: "Expert mowing for a pristine finish.",
+            image: "https://www.summitturfservices.com/wp-content/uploads/lawn-mowing-services-kansas-city-1.jpg",
+            size: "medium"
+        },
+        {
+            category: 'landscaping',
+            title: "Custom Landscaping",
+            description: "Enhancing curb appeal with professional design.",
+            image: "https://www.summitturfservices.com/wp-content/uploads/summit-turf-services-landscaping.jpg",
+            size: "large"
+        },
+        {
+            category: 'restoration',
+            title: "Deep Core Aeration",
+            description: "Relieving soil compaction for healthier roots.",
+            image: "https://www.summitturfservices.com/wp-content/uploads/lawn-aeration.png",
+            size: "small"
+        },
+        {
+            category: 'maintenance',
+            title: "Fertilization Program",
+            description: "Balanced nutrients for vibrant green turf.",
+            image: "https://www.summitturfservices.com/wp-content/uploads/lees-summit-lawn-care-fertilizing-your-lawn-1-e1559853407120.jpg",
+            size: "medium"
+        },
+        {
+            category: 'landscaping',
+            title: "Sod Care",
+            description: "Ensuring new sod establishes perfectly.",
+            image: "https://www.summitturfservices.com/wp-content/uploads/when-to-fertilize-sod-600x450.jpg",
+            size: "small"
+        },
+        {
+            category: 'maintenance',
+            title: "Lawn Health Check",
+            description: "Regular inspections for disease and pests.",
+            image: "https://scontent.xx.fbcdn.net/v/t39.30808-6/490254873_1238102318324695_7084067725429596435_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=127cfc&_nc_ohc=6Jw3tIsXTf8Q7kNvwGI0RRd&_nc_oc=AdnFxqlaDpMyhF5QhGoqQyGP9JllSEkECmABu2C__Xfe6fV5Ylzn4_6C4aEdTNL0G3c&_nc_zt=23&_nc_ht=scontent.xx&_nc_gid=nnntNpbY9VEB87K8aKIvNw&oh=00_AfkyodfxnByxpojGkPEneO6jS7n38sMrozl_TvFIdE5h0Q&oe=69486A01",
+            size: "medium"
+        },
+        {
+            category: 'landscaping',
+            title: "Garden Bed Enhancement",
+            description: "Adding color and texture to landscape beds.",
+            image: "https://scontent.xx.fbcdn.net/v/t39.30808-6/496865153_1266018212199772_4853874665924936756_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=127cfc&_nc_ohc=GLn_vlVqYm8Q7kNvwGAj2iq&_nc_oc=AdkfggX0SzVBHYoLvWYzd-s-sVoEIu0WP3-hAm-WPTLv6oeABsYJPDNypTS69PtXRx0&_nc_zt=23&_nc_ht=scontent.xx&_nc_gid=u9yQGBF1IPNjBGzcqBK6iQ&oh=00_AfnLe7Q985WR_XM2-8Ndx_CusovLf9WTExERP8gPj1pOyQ&oe=694854F8",
+            size: "medium"
+        },
+        {
+            category: 'restoration',
+            title: "Turf Recovery",
+            description: "Bringing life back to tired lawns.",
+            image: "https://scontent.xx.fbcdn.net/v/t39.30808-6/566220896_1424165896385002_7423039168773267929_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=127cfc&_nc_ohc=uHats749ecAQ7kNvwFs8qq-&_nc_oc=Adl7pUYFNQk4g2lzZbz15bQaLiNOEAIOUca8FEhAqMyFhj8bKJUpJf1Ps46Xfhmqce4&_nc_zt=23&_nc_ht=scontent.xx&_nc_gid=N_mYD8eiMRhygaQG7bvoSQ&oh=00_Afl7u_VJsqh-yXgFyPY6vPze-T1UyOo29bkpSw6DmqL2WQ&oe=6948490A",
+            size: "large"
+        },
+        {
+            category: 'maintenance',
+            title: "Precision Edging",
+            description: "Clean lines for a polished look.",
+            image: "https://scontent.xx.fbcdn.net/v/t39.30808-6/496237092_1266030628865197_6026036994344773445_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=vHDUl66lLgAQ7kNvwFK-HIl&_nc_oc=AdmUDR-Uyd9l8v9otAKvOOyh0scpePjqptD69YPc0RCg-MGCPDCyk20QFywkdPxFNCY&_nc_zt=23&_nc_ht=scontent.xx&_nc_gid=1Thu4BEENpMHdkmKYaVCZQ&oh=00_AflOnIIBiYELxA1RKR97rSvGUBTp_B8vhTklpDgf6u-vHA&oe=69487A02",
+            size: "small"
         }
     ];
 
+    const allItems = [...uploadedItems, ...staticGalleryItems];
+
     const filteredItems = selectedCategory === 'all' 
-        ? galleryItems 
-        : galleryItems.filter(item => item.category === selectedCategory);
+        ? allItems 
+        : allItems.filter(item => item.category === selectedCategory);
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            processFiles(Array.from(e.dataTransfer.files));
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            processFiles(Array.from(e.target.files));
+        }
+    };
+
+    const processFiles = (files: File[]) => {
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target?.result) {
+                        const newItem: GalleryItem = {
+                            category: 'community',
+                            title: 'Community Upload',
+                            description: 'Shared by a happy customer',
+                            image: e.target.result as string,
+                            size: 'medium',
+                            isUserUploaded: true
+                        };
+                        setUploadedItems(prev => [newItem, ...prev]);
+                        setSelectedCategory('community');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    };
 
     return (
         <div className="flex flex-col w-full">
@@ -88,7 +212,8 @@ const GalleryPage: React.FC = () => {
                         { id: 'all', label: 'All Projects' },
                         { id: 'restoration', label: 'Restoration' },
                         { id: 'maintenance', label: 'Maintenance' },
-                        { id: 'landscaping', label: 'Landscaping' }
+                        { id: 'landscaping', label: 'Landscaping' },
+                        ...(uploadedItems.length > 0 ? [{ id: 'community', label: 'Community' }] : [])
                     ].map((cat) => (
                         <button
                             key={cat.id}
@@ -105,18 +230,62 @@ const GalleryPage: React.FC = () => {
                 </div>
             </section>
 
+             {/* Upload Section */}
+             <section className="px-4 pt-10 pb-2 bg-background-dark">
+                <div className="max-w-3xl mx-auto">
+                    <FadeIn delay={100}>
+                        <div 
+                            className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 group
+                                ${isDragging 
+                                    ? 'border-primary bg-primary/10 scale-[1.02]' 
+                                    : 'border-border-dark bg-surface-dark hover:border-primary/50 hover:bg-surface-dark/80'
+                                }`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <input 
+                                type="file" 
+                                ref={fileInputRef}
+                                className="hidden" 
+                                onChange={handleFileSelect}
+                                accept="image/*"
+                                multiple
+                            />
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors duration-300 ${isDragging ? 'bg-primary text-background-dark' : 'bg-background-dark text-primary group-hover:scale-110'}`}>
+                                <span className="material-symbols-outlined text-3xl">cloud_upload</span>
+                            </div>
+                            <h3 className="text-white text-xl font-bold mb-2">Share Your Lawn Photos</h3>
+                            <p className="text-gray-400 max-w-md">
+                                Drag and drop your before & after photos here, or click to select files. 
+                                We'd love to feature your lawn!
+                            </p>
+                            <span className="mt-4 text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                                Supports JPG, PNG, WEBP
+                            </span>
+                        </div>
+                    </FadeIn>
+                </div>
+            </section>
+
             {/* Masonry Grid */}
             <section className="px-4 py-16 bg-background-dark min-h-screen">
                 <div className="max-w-7xl mx-auto">
                     <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
                         {filteredItems.map((item, index) => (
                             <FadeIn key={index} delay={index * 100}>
-                                <div className="break-inside-avoid relative group rounded-2xl overflow-hidden border border-border-dark bg-surface-dark">
+                                <div className={`break-inside-avoid relative group rounded-2xl overflow-hidden border bg-surface-dark ${item.isUserUploaded ? 'border-primary/50 shadow-[0_0_15px_rgba(70,236,19,0.1)]' : 'border-border-dark'}`}>
                                     <img 
                                         src={item.image} 
                                         alt={item.title} 
                                         className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-110" 
                                     />
+                                    {item.isUserUploaded && (
+                                        <div className="absolute top-3 right-3 bg-primary text-background-dark text-[10px] font-bold px-2 py-1 rounded shadow-lg uppercase tracking-wider z-10">
+                                            Community
+                                        </div>
+                                    )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-background-dark/90 via-background-dark/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                                         <span className="text-primary text-xs font-bold uppercase tracking-wider mb-2">{item.category}</span>
                                         <h3 className="text-white text-xl font-bold">{item.title}</h3>

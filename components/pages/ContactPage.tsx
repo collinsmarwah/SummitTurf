@@ -453,12 +453,12 @@ const ContactPage: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Filters */}
+                                            {/* Lead quality filters */}
                                             <div className="space-y-4">
-                                                <h4 className="text-primary font-bold text-sm uppercase tracking-wider border-t border-border-dark pt-4">Final Details</h4>
+                                                <h4 className="text-primary font-bold text-sm uppercase tracking-wider border-t border-border-dark pt-4">Lead quality filters</h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label htmlFor="budget" className="text-white text-sm font-bold ml-1 mb-1 block">Budget Range</label>
+                                                        <label htmlFor="budget" className="text-white text-sm font-bold ml-1 mb-1 block">Budget range</label>
                                                         <select id="budget" name="budget" value={formData.budget} onChange={handleChange} onBlur={handleBlur} className={getInputClass('budget')}>
                                                             <option value="">Select Range...</option>
                                                             <option value="economy">Economy</option>
